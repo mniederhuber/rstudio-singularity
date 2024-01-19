@@ -1,5 +1,6 @@
 #!/bin/bash
-#SBATCH --time=3-00:00:00
+#SBATCH -p interact
+#SBATCH --time=3:00:00
 #SBATCH --signal=USR2
 #SBATCH --ntasks=1
 
@@ -42,7 +43,7 @@ export LC_ALL="en_US.UTF-8"
 ##NOTE##
 # This is a local drive location I can write, you should be able
 # to just set to a subfolder of your HPC home/scratch directory
-export TMPDIR="/work/users/m/j/mjn15/rstudio-server-test"
+export TMPDIR="${PWD}"
 
 mkdir -p "$TMPDIR/tmp/rstudio-server"
 uuidgen > "$TMPDIR/tmp/rstudio-server/secure-cookie-key"
@@ -50,6 +51,13 @@ chmod 0600 "$TMPDIR/tmp/rstudio-server/secure-cookie-key"
 
 mkdir -p "$TMPDIR/var/lib"
 mkdir -p "$TMPDIR/var/run"
+
+### make rsession.conf
+# sets the current working directory as the default starting point for the rstudio session
+cat > conf/rsession.conf << EOF 
+session-default-working-dir=${PWD} 
+r-libs-user=/usr/local/lib/R/site-library
+EOF
 
 # Also bind data directory on the host into the Singularity container.
 # By default the only host file systems mounted within the container are $HOME, /tmp, /proc, /sys, and /dev.
@@ -59,11 +67,12 @@ RSTUDIO_PASSWORD=${PASSWORD} singularity exec \
   --bind="$TMPDIR/var/lib:/var/lib/rstudio-server" \
   --bind="$TMPDIR/var/run:/var/run/rstudio-server" \
   --bind="$TMPDIR/tmp:/tmp" \
-  --bind="/work/users/m/j/mjn15/rstudio-server-test" \
-  rstudio_4.2.sif \
+  --bind="$TMPDIR/conf/rsession.conf:/etc/rstudio/rsession.conf" \
+  --bind="$TMPDIR:$TMPDIR" \
+  singularity/rstudio_4.2.sif \
   rserver --server-user ${USER} \
     --www-port ${PORT} \
     --auth-none=0 \
-    --auth-pam-helper-path "/work/users/m/j/mjn15/rstudio-server-test/auth" \
-    --auth-timeout-minutes=0 --auth-stay-signed-in-days=30
+    --auth-pam-helper-path "$TMPDIR/auth" \
+    --auth-timeout-minutes=0 --auth-stay-signed-in-days=30 
 printf 'rserver exited' 1>&2
