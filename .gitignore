@@ -2,3 +2,4 @@ logs
 singularity
 tmp
 var
+bioconductor_docker
