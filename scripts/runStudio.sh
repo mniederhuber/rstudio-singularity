@@ -54,25 +54,27 @@ mkdir -p "$TMPDIR/var/run"
 
 ### make rsession.conf
 # sets the current working directory as the default starting point for the rstudio session
+# also, sets a library path to within the sandboxed image, to allow for additional package installation
 cat > conf/rsession.conf << EOF 
-session-default-working-dir=${PWD} 
-r-libs-user=/usr/local/lib/R/site-library
+session-default-working-dir=${TMPDIR} 
+r-libs-user=${TMPDIR}/singularity/bio_dev-sand.sif/usr/local/lib/R/site-library
 EOF
 
 # Also bind data directory on the host into the Singularity container.
 # By default the only host file systems mounted within the container are $HOME, /tmp, /proc, /sys, and /dev.
 ##NOTE##
 # You may need here just to replace the fourth bind option, or drop
+
 RSTUDIO_PASSWORD=${PASSWORD} singularity exec \
   --bind="$TMPDIR/var/lib:/var/lib/rstudio-server" \
   --bind="$TMPDIR/var/run:/var/run/rstudio-server" \
   --bind="$TMPDIR/tmp:/tmp" \
   --bind="$TMPDIR/conf/rsession.conf:/etc/rstudio/rsession.conf" \
   --bind="$TMPDIR:$TMPDIR" \
-  singularity/rstudio_4.2.sif \
+  singularity/bio_dev-sand.sif \
   rserver --server-user ${USER} \
     --www-port ${PORT} \
     --auth-none=0 \
-    --auth-pam-helper-path "$TMPDIR/auth" \
+    --auth-pam-helper-path "$TMPDIR/conf/auth" \
     --auth-timeout-minutes=0 --auth-stay-signed-in-days=30 
 printf 'rserver exited' 1>&2
