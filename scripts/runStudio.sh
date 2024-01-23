@@ -71,7 +71,7 @@ RSTUDIO_PASSWORD=${PASSWORD} singularity exec \
   --bind="$TMPDIR/tmp:/tmp" \
   --bind="$TMPDIR/conf/rsession.conf:/etc/rstudio/rsession.conf" \
   --bind="$TMPDIR:$TMPDIR" \
-  singularity/bio_dev-sand.sif \
+  singularity/bio_dev-02.sif \
   rserver --server-user ${USER} \
     --www-port ${PORT} \
     --auth-none=0 \

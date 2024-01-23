@@ -3,3 +3,5 @@ singularity
 tmp
 var
 bioconductor_docker
+renv*
+.R*
