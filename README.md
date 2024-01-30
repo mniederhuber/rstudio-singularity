@@ -15,9 +15,10 @@ git clone git@github.com:mniederhuber/rstudio-singularity.git
 ```
 
 2. build the singularity image - assumes installation of apptainer 
+needs to be run in an interactive session...
 ```bash
 module load apptainer
-apptainer build singularity/bio_dev.sif singularity/bio_dev.def
+apptainer build defFile/bio_dev.sif bio_dev.def
 ```
 3. start up rstudio server \
 This script does a few things... \
