@@ -32,3 +32,4 @@ When done using RStudio Server, terminate the job by:
 2. Issue the following command on the login node:
 
       scancel -f 28489144
+slurmstepd: error: *** JOB 28489144 ON c1127 CANCELLED AT 2024-01-23T11:53:00 ***

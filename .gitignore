@@ -1,5 +1,5 @@
 logs
-singularity
+builds
 tmp
 var
 bioconductor_docker
