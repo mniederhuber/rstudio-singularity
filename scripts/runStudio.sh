@@ -53,8 +53,8 @@ export LC_ALL="en_US.UTF-8"
 
 ##NOTE##
 # This is a local drive location I can write, you should be able
-# to just set to a subfolder of your HPC home/scratch directory
-export TMPDIR="${PWD}/rstudio-singularity"
+# You can adjust this as needed depending on your project dir structure
+export TMPDIR="${PWD}"
 
 mkdir -p "$TMPDIR/tmp/rstudio-server"
 uuidgen > "$TMPDIR/tmp/rstudio-server/secure-cookie-key"
