@@ -3,6 +3,8 @@
 #SBATCH --time=3:00:00
 #SBATCH --signal=USR2
 #SBATCH --ntasks=1
+#SBATCH -o /var/logs/studio-%j.out
+#SBATCH -e /var/logs/studio-%j.err
 
 module purge
 module load singularity
