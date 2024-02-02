@@ -10,10 +10,10 @@ OWNER mniederhuber
 
 # add any necessary pacakges here...
 echo "install.packages(c('BiocManager','ggplot2','renv'))" | R
-echo "BiocManager::install(c('GenomicRanges'))" | R
+echo "BiocManager::install(c('GenomicRanges', 'Rsubread'))" | R
 
 # install genome refs, txdb not listed
-# BiocManager::install('BSgenome.Dmelanogaster.UCSC.dm6') -- Dmel
-# BiocManager::install("BSgenome.Scerevisiae.UCSC.sacCer3") -- SacCer
+#echo "BiocManager::install('BSgenome.Dmelanogaster.UCSC.gm6')" | R
 
-echo "BiocManager::install('BSgenome.Dmelanogaster.UCSC.gm6')" | R
+echo "BiocManager::install('BSgenome.Scerevisiae.UCSC.sacCer3')" | R
+
