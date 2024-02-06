@@ -1,17 +1,63 @@
 #!/bin/bash
 #SBATCH -p interact
-#SBATCH --time=3:00:00
+#SBATCH --time=8:00:00
 #SBATCH --signal=USR2
 #SBATCH --ntasks=1
 #SBATCH -o /var/logs/studio-%j.out
 #SBATCH -e /var/logs/studio-%j.err
 
+
 module purge
 module load singularity
+
+####################################
+## EXPORT VARIABLES AND MAKE DIRS ##
+####################################
+
+# set the working directory
+export TMPDIR="${PWD}"
+
+if [ ! -d "$TMPDIR"/var/logs ];then
+	mkdir -p "$TMPDIR"/var/logs
+fi
+
+# necessary?
+export LANG="en_US.UTF-8"
+export LC_COLLATE="en_US.UTF-8"
+export LC_CTYPE="en_US.UTF-8"
+export LC_MESSAGES="en_US.UTF-8"
+export LC_MONETARY="en_US.UTF-8"
+export LC_NUMERIC="en_US.UTF-8"
+export LC_TIME="en_US.UTF-8"
+export LC_ALL="en_US.UTF-8"
+
+mkdir -p "$TMPDIR/tmp/rstudio-server"
+uuidgen > "$TMPDIR/tmp/rstudio-server/secure-cookie-key"
+chmod 0600 "$TMPDIR/tmp/rstudio-server/secure-cookie-key"
+
+mkdir -p "$TMPDIR/var/lib"
+mkdir -p "$TMPDIR/var/run"
+mkdir -p "$TMPDIR/conf"
+
+### make rsession.conf
+# sets the current working directory as the default starting point for the rstudio session
+# also, sets a library path to within the sandboxed image, to allow for additional package installation
+# the user home directory should be bound by default 
+cat > $TMPDIR/conf/rsession.conf << EOF 
+session-default-working-dir=${TMPDIR} 
+EOF
+
+######################################
+## get sif file and export password ##
+######################################
 
 sifFile=$1
 
 export PASSWORD=$(openssl rand -base64 8)
+
+#########################
+## OUTPUT INSTRUCTIONS ##
+#########################
 
 # get unused socket per https://unix.stackexchange.com/a/132524
 # tiny race condition between the python & singularity commands
@@ -42,33 +88,9 @@ When done using RStudio Server, terminate the job by:
 scancel -f ${SLURM_JOB_ID}
 END
 
-export LANG="en_US.UTF-8"
-export LC_COLLATE="en_US.UTF-8"
-export LC_CTYPE="en_US.UTF-8"
-export LC_MESSAGES="en_US.UTF-8"
-export LC_MONETARY="en_US.UTF-8"
-export LC_NUMERIC="en_US.UTF-8"
-export LC_TIME="en_US.UTF-8"
-export LC_ALL="en_US.UTF-8"
-
-##NOTE##
-# This is a local drive location I can write, you should be able
-# You can adjust this as needed depending on your project dir structure
-export TMPDIR="${PWD}"
-
-mkdir -p "$TMPDIR/tmp/rstudio-server"
-uuidgen > "$TMPDIR/tmp/rstudio-server/secure-cookie-key"
-chmod 0600 "$TMPDIR/tmp/rstudio-server/secure-cookie-key"
-
-mkdir -p "$TMPDIR/var/lib"
-mkdir -p "$TMPDIR/var/run"
-
-### make rsession.conf
-# sets the current working directory as the default starting point for the rstudio session
-# also, sets a library path to within the sandboxed image, to allow for additional package installation
-cat > $TMPDIR/conf/rsession.conf << EOF 
-session-default-working-dir=${TMPDIR} 
-EOF
+##################
+## START SERVER ##
+##################
 
 # Also bind data directory on the host into the Singularity container.
 # By default the only host file systems mounted within the container are $HOME, /tmp, /proc, /sys, and /dev.

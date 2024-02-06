@@ -1,0 +1,16 @@
+Bootstrap: docker
+From: rocker/rstudio:4.3.2
+
+# most recent version as of 1/23/22
+
+%labels
+OWNER mniederhuber
+
+%post
+
+# add any necessary pacakges here...
+# take care that too much will increase output image size, impacting ability to easily share the image
+echo "install.packages('renv')" | R
+
+# additional packages should be installed from the rserver session after initializing renv
+# packages should go to user home and then be tracked with a project specific lock file

@@ -1,9 +1,2 @@
-logs
-builds
-tmp
 var
-bioconductor_docker
-renv*
-.R*
-conf/rsession.conf
-.Rhistory
+*.sif
