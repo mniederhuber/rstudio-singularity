@@ -55,8 +55,21 @@ The current design is to allow users to install packages "on the fly" to their h
 
 # Publishing and sharing analysis
 
-Once the singularity image has been built for a project it will provide a static base environment.
-This image is relatively bare bones to keep the `.sif` relatively small.
-Currently it includes the `tidyverse` packages, but this could even be removed. 
-With careful use of `renv` the renv `.lockfile` will then provide any  
+Once the singularity image has been built for a project it will provide a static base environment.\
+This image is relatively bare bones to keep the `.sif` small.\
+Currently it includes the `tidyverse` packages, but this could even be removed. \
+With careful use of `renv` the renv `.lockfile` will then provide package tracking for reproducibility.
+
+When it's time to publish or share analysis there are two options. \
+
+1. The container image can either be rebuilt from the definition file, and packages can be installed from `renv`. \
+[!note] this may cause a problem any of the underlying dependencies installed by the rocker script have changed... *but generally should produce the a nearly identical environment*\
+
+2. The container image itself can be shared. \
+The image can either be uploaded to `dockerhub` or shared directly. \
+Dockerhub probably provides the best option for analysis that is associated with a publication.
+
+
+
+
 

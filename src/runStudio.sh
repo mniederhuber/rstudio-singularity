@@ -3,16 +3,16 @@
 #SBATCH --time=8:00:00
 #SBATCH --signal=USR2
 #SBATCH --ntasks=1
-#SBATCH -o /var/logs/studio-%j.out
-#SBATCH -e /var/logs/studio-%j.err
+#SBATCH -o var/logs/studio-%j.out
+#SBATCH -e var/logs/studio-%j.err
 
 
 module purge
 module load singularity
 
-####################################
-## EXPORT VARIABLES AND MAKE DIRS ##
-####################################
+#####
+## export variables and make directories
+#####
 
 # set the working directory
 export TMPDIR="${PWD}"
@@ -43,26 +43,28 @@ mkdir -p "$TMPDIR/conf"
 # sets the current working directory as the default starting point for the rstudio session
 # also, sets a library path to within the sandboxed image, to allow for additional package installation
 # the user home directory should be bound by default 
-cat > $TMPDIR/conf/rsession.conf << EOF 
+cat > "$TMPDIR/conf/rsession.conf" << EOF 
 session-default-working-dir=${TMPDIR} 
 EOF
 
-######################################
-## get sif file and export password ##
-######################################
+#####
+## get sif file, export password, and assign avail port 
+#####
 
 sifFile=$1
 
 export PASSWORD=$(openssl rand -base64 8)
 
-#########################
-## OUTPUT INSTRUCTIONS ##
-#########################
-
 # get unused socket per https://unix.stackexchange.com/a/132524
 # tiny race condition between the python & singularity commands
 readonly PORT=$(python -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()')
-cat 1>&2 <<END
+
+
+#####
+# write out instructions
+#####
+
+cat <<END
 
 1. SSH tunnel from your workstation using the following command:
 
@@ -71,7 +73,7 @@ ssh -N -L 8989:${HOSTNAME}:${PORT} ${USER}@longleaf.unc.edu
 and point your web browser to http://localhost:8989
 
 > [!NOTE] 
-> The port `8989` is arbitrary. 
+> The port 8989 is arbitrary. 
 > It just needs to be any open port on your local machine.
 
 2. log in to RStudio Server using the following credentials:

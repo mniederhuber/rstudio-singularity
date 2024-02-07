@@ -1,15 +1,11 @@
 Bootstrap: docker
-From: rocker/rstudio:4.3.2
+From: bioconductor/bioconductor_docker:RELEASE_3_18
 
-# most recent version as of 1/23/22
-
-%labels
-OWNER mniederhuber
-
-%post
+# as of 2/7/24 the bioconductor image builds off of rocker/rstudio:4.1.0 
+# which is based on unbuntu 20.04
 
 # add any necessary pacakges here...
-# take care that too much will increase output image size, impacting ability to easily share the image
+%post
 echo "install.packages('renv')" | R
 
 # additional packages should be installed from the rserver session after initializing renv
