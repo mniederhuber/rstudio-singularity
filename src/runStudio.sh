@@ -37,13 +37,28 @@ chmod 0600 "$TMPDIR/tmp/rstudio-server/secure-cookie-key"
 
 mkdir -p "$TMPDIR/var/lib"
 mkdir -p "$TMPDIR/var/run"
-mkdir -p "$TMPDIR/conf"
+mkdir -p "$TMPDIR/.config/rstudio"
+mkdir -p "$TMPDIR/.local/share"
+# copy the user global options to the project direcotry .config
+cp $TMPDIR/rstudio-singularity/conf/rstudio-prefs.json $TMPDIR/.config/rstudio/.
+
+# https://github.com/DOI-USGS/lake-temperature-model-prep/blob/47db0d8a4b276ee3514132aaedec1d32776f7558/launch-rstudio-container.slurm#L18
+# Set the local directory as the place for session information. This should make
+# command line history more relevant, as it will be restricted to the project
+# currently being worked on.
+# Based on:
+# Pointer here: https://support.rstudio.com/hc/en-us/articles/218730228-Resetting-a-user-s-state-on-RStudio-Workbench-RStudio-Server
+# RStudio Workbench admin guide here: https://docs.rstudio.com/ide/server-pro/r_sessions/customizing_session_settings.html
+# XDG Base Directory Specification here: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+export SINGULARITYENV_XDG_DATA_HOME=${TMPDIR}/.local/share
+export SINGULARITYENV_XDG_CONFIG_HOME=${TMPDIR}/.config/rstudio
 
 ### make rsession.conf
 # sets the current working directory as the default starting point for the rstudio session
 # also, sets a library path to within the sandboxed image, to allow for additional package installation
 # the user home directory should be bound by default 
-cat > "$TMPDIR/conf/rsession.conf" << EOF 
+cat > "$TMPDIR/.config/rsession.conf" << EOF 
+session-save-action-default=no
 session-default-working-dir=${TMPDIR} 
 EOF
 
@@ -103,12 +118,12 @@ RSTUDIO_PASSWORD=${PASSWORD} singularity exec \
   --bind="$TMPDIR/var/lib:/var/lib/rstudio-server" \
   --bind="$TMPDIR/var/run:/var/run/rstudio-server" \
   --bind="$TMPDIR/tmp:/tmp" \
-  --bind="$TMPDIR/conf/rsession.conf:/etc/rstudio/rsession.conf" \
+  --bind="$TMPDIR/.config/rsession.conf:/etc/rstudio/rsession.conf" \
   --bind="$TMPDIR:$TMPDIR" \
   $sifFile \
   rserver --server-user ${USER} \
     --www-port ${PORT} \
     --auth-none=0 \
-    --auth-pam-helper-path "$TMPDIR/conf/auth" \
+    --auth-pam-helper-path "$TMPDIR/.config/auth" \
     --auth-timeout-minutes=0 --auth-stay-signed-in-days=30 
 printf 'rserver exited' 1>&2

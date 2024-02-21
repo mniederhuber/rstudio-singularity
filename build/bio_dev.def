@@ -7,6 +7,10 @@ From: bioconductor/bioconductor_docker:RELEASE_3_18
 # add any necessary pacakges here...
 %post
 echo "install.packages('renv')" | R
+echo "install.packages('devtools')" | R
+
+# install the dracula theme for fun
+echo "rstudioapi::addTheme("https://raw.githubusercontent.com/dracula/rstudio/master/dracula.rstheme", apply = TRUE) | R"
 
 # additional packages should be installed from the rserver session after initializing renv
 # packages should go to user home and then be tracked with a project specific lock file
