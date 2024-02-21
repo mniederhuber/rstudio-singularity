@@ -1,0 +1,8 @@
+{
+    "editor_keybindings": "vim",
+    "global_theme": "alternate",
+    "editor_theme": "Dracula",
+    "posix_terminal_shell": "bash",
+    "server_editor_font_enabled": true,
+    "server_editor_font": "Courier"
+}

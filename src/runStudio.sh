@@ -6,41 +6,44 @@
 #SBATCH -o var/logs/studio-%j.out
 #SBATCH -e var/logs/studio-%j.err
 
+#TODO make this a parameter that can be set in a separate config file
+copy_prefs=false
 
 module purge
 module load singularity
+
+export TMPDIR="${PWD}"
 
 #####
 ## export variables and make directories
 #####
 
+# make directories
+mkdir -p "$TMPDIR/tmp/${SLURM_JOB_ID}/rstudio-server"
+uuidgen > "$TMPDIR/tmp/${SLURM_JOB_ID}/rstudio-server/secure-cookie-key"
+chmod 0600 "$TMPDIR/tmp/${SLURM_JOB_ID}/rstudio-server/secure-cookie-key"
+
+mkdir -p "$TMPDIR/var/lib"
+mkdir -p "$TMPDIR/var/run"
+mkdir -p "$TMPDIR/.config"
+mkdir -p "$TMPDIR/.local/share"
+# copy the user global options to the project direcotry .config
+
+
+if $copy_prefs; then
+  cp $TMPDIR/rstudio-singularity/conf/rstudio-prefs.json $TMPDIR/.config/rstudio/.
+fi
+cp $TMPDIR/rstudio-singularity/conf/auth $TMPDIR/.config/.
+
+## export variables
 # set the working directory
-export TMPDIR="${PWD}"
 
 if [ ! -d "$TMPDIR"/var/logs ];then
 	mkdir -p "$TMPDIR"/var/logs
 fi
+# PAM auth helper used by RStudio
+export RSTUDIO_AUTH="${TMPDIR}/.config/auth"
 
-# necessary?
-export LANG="en_US.UTF-8"
-export LC_COLLATE="en_US.UTF-8"
-export LC_CTYPE="en_US.UTF-8"
-export LC_MESSAGES="en_US.UTF-8"
-export LC_MONETARY="en_US.UTF-8"
-export LC_NUMERIC="en_US.UTF-8"
-export LC_TIME="en_US.UTF-8"
-export LC_ALL="en_US.UTF-8"
-
-mkdir -p "$TMPDIR/tmp/rstudio-server"
-uuidgen > "$TMPDIR/tmp/rstudio-server/secure-cookie-key"
-chmod 0600 "$TMPDIR/tmp/rstudio-server/secure-cookie-key"
-
-mkdir -p "$TMPDIR/var/lib"
-mkdir -p "$TMPDIR/var/run"
-mkdir -p "$TMPDIR/.config/rstudio"
-mkdir -p "$TMPDIR/.local/share"
-# copy the user global options to the project direcotry .config
-cp $TMPDIR/rstudio-singularity/conf/rstudio-prefs.json $TMPDIR/.config/rstudio/.
 
 # https://github.com/DOI-USGS/lake-temperature-model-prep/blob/47db0d8a4b276ee3514132aaedec1d32776f7558/launch-rstudio-container.slurm#L18
 # Set the local directory as the place for session information. This should make
@@ -62,6 +65,19 @@ session-save-action-default=no
 session-default-working-dir=${TMPDIR} 
 EOF
 
+# from UNC ondemand rstudio server setup scripts:
+# Generate a database.conf file
+export DBCONF="${TMPDIR}/.config/database.conf"
+(
+umask 077
+sed 's/^ \{2\}//' > "${DBCONF}" << EOL
+  # set database location
+  provider=sqlite
+  directory=${TMPDIR}/tmp/${SLURM_JOB_ID}/rstudio-server/db
+EOL
+)
+chmod 700 "${DBCONF}"
+
 #####
 ## get sif file, export password, and assign avail port 
 #####
@@ -79,7 +95,9 @@ readonly PORT=$(python -c 'import socket; s=socket.socket(); s.bind(("", 0)); pr
 # write out instructions
 #####
 
-cat <<END
+cat > rstudio-login.txt <<END
+
+Rstudio server started with working directory: ${TMPDIR}
 
 1. SSH tunnel from your workstation using the following command:
 
@@ -87,21 +105,16 @@ ssh -N -L 8989:${HOSTNAME}:${PORT} ${USER}@longleaf.unc.edu
 
 and point your web browser to http://localhost:8989
 
-> [!NOTE] 
-> The port 8989 is arbitrary. 
-> It just needs to be any open port on your local machine.
-
 2. log in to RStudio Server using the following credentials:
 
 username: <YOUR LL USERNAME>
 pass: ${PASSWORD}
 
+To end the session:
+Press red power button in the RStudio Server web interface to log out.
+*I believe this is important to properly close any lingering processes.*
 
-When done using RStudio Server, terminate the job by:
-
-1. Exit the RStudio Session ("power" button in the top right corner of the RStudio window)
-2. Issue the following command on the login node:
-
+Then:
 scancel -f ${SLURM_JOB_ID}
 END
 
@@ -115,9 +128,9 @@ END
 # You may need here just to replace the fourth bind option, or drop
 
 RSTUDIO_PASSWORD=${PASSWORD} singularity exec \
-  --bind="$TMPDIR/var/lib:/var/lib/rstudio-server" \
+  --bind="$TMPDIR/var/lib:/var/lib/rs${SLURM_JOB_ID}tudio-server" \
   --bind="$TMPDIR/var/run:/var/run/rstudio-server" \
-  --bind="$TMPDIR/tmp:/tmp" \
+  --bind="$TMPDIR/tmp/${SLURM_JOB_ID}:/tmp" \
   --bind="$TMPDIR/.config/rsession.conf:/etc/rstudio/rsession.conf" \
   --bind="$TMPDIR:$TMPDIR" \
   $sifFile \
@@ -125,5 +138,6 @@ RSTUDIO_PASSWORD=${PASSWORD} singularity exec \
     --www-port ${PORT} \
     --auth-none=0 \
     --auth-pam-helper-path "$TMPDIR/.config/auth" \
-    --auth-timeout-minutes=0 --auth-stay-signed-in-days=30 
+    --database-config-file "${DBCONF}" \
+    --auth-timeout-minutes=0 --auth-stay-signed-in-days=2 
 printf 'rserver exited' 1>&2
