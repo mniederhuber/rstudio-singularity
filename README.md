@@ -13,7 +13,7 @@ Though it could likely be used on other HPC systems with *minimal* adjustments.
 git clone git@github.com:mniederhuber/rstudio-singularity.git
 ```
 > **NOTE** \
-> By default the build and run scripts assume that the project working directory is the `$PWD` where the scripts are run. \
+> By default the run script assume that the project working directory is the `$PWD` where the scripts are run. \
 > eg. a project parent directory that contains this repo `project/rstudio-singularity` will be the working directory if the scripts are run from `project/`. 
 
 ## 2. Pull a container image from dockerhub
