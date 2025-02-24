@@ -44,6 +44,10 @@ The image will be cached in your `$HOME` directory, and you can easily move or c
 
 The `runStudio.sh` script in this repository was written to launch RStudio server from a container on a compute node of the UNC cluster. I frankensteined this script together from a few places and it may need to be modified to run outside of UNC.
 
+>[!WARNING]
+>Make sure to customize the `runStudio.sh` SBATCH settings to fit your specific use (set partition, time, memory...).
+>These are not set in the script by default. 
+
 This script does a few things... \
 - It makes some directories for server stuff: `conf/`,`tmp/`,`var/` in the project working directory. 
 - Writes a brief `rsession.conf` file to define working directory for the server. 
