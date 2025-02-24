@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH -p interact
-#SBATCH --time=8:00:00
+#SBATCH -p {PARTITION}
+#SBATCH --time={TIME}
 #SBATCH --signal=USR2
 #SBATCH --ntasks=1
 #SBATCH -o var/logs/studio-%j.out
